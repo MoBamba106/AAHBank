@@ -1064,9 +1064,9 @@
         <div class="panel-head">
           <h2 id="addPanelTitle">Add a question</h2>
           <div class="toolbar-group">
-            <button class="btn btn-secondary btn-sm" id="exportBtn">⬇ Export</button>
-            <label class="btn btn-secondary btn-sm" for="importInput" style="cursor:pointer;">⬆ Import</label>
+            <label class="btn btn-secondary btn-sm" for="importInput" style="cursor:pointer;">⬇ Import</label>
             <input id="importInput" type="file" accept="application/json" class="hidden" />
+            <button class="btn btn-secondary btn-sm" id="exportBtn">⬆ Export</button>
           </div>
         </div>
         <div class="panel-body">
@@ -1448,18 +1448,34 @@
     } catch(e) { console.warn('loadLeaderboard error', e); }
   }
 
-  function saveLeaderboard() {
-    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(state.leaderboard));
-    renderLeaderboard();
+  function listenToLeaderboard() {
+    if (!db) { renderLeaderboard(); return; }
+    db.collection('leaderboard').onSnapshot(snapshot => {
+      state.leaderboard = {};
+      snapshot.docs.forEach(doc => {
+        state.leaderboard[doc.id] = doc.data().count || 0;
+      });
+      renderLeaderboard();
+    }, err => {
+      console.warn('Leaderboard sync error:', err);
+    });
   }
 
   function incrementUserQuestions() {
     if (!state.userName) return;
-    if (!state.leaderboard[state.userName]) {
-      state.leaderboard[state.userName] = 0;
+    if (db) {
+      db.collection('leaderboard').doc(state.userName).set(
+        { count: firebase.firestore.FieldValue.increment(1) },
+        { merge: true }
+      ).catch(err => console.error('Failed to update leaderboard:', err));
+    } else {
+      if (!state.leaderboard[state.userName]) {
+        state.leaderboard[state.userName] = 0;
+      }
+      state.leaderboard[state.userName]++;
+      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(state.leaderboard));
+      renderLeaderboard();
     }
-    state.leaderboard[state.userName]++;
-    saveLeaderboard();
   }
 
   function renderLeaderboard() {
@@ -2013,6 +2029,7 @@
   renderAll();
   renderLeaderboard();
   listenToQuestions();
+  listenToLeaderboard();
   setTab('add');
 </script>
 </body>
