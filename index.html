@@ -1501,15 +1501,27 @@
       tag: cleanText(q.tag),
       createdAt: Number(q.createdAt || Date.now())
     })).filter(q => q.question && q.answers.A && q.answers.B);
-    if (db) { showToast('Import is for local preview — Firebase sync handles shared data.'); }
     // Merge: only add questions whose normalized text doesn't already exist
     const existingNorm = new Set(state.questions.map(q => normalizeText(q.question)));
     const toAdd = normalized.filter(q => !existingNorm.has(normalizeText(q.question)));
     const skipped = normalized.length - toAdd.length;
-    state.questions = [...state.questions, ...toAdd];
-    saveLocal(); renderAll();
+
+    if (db && toAdd.length > 0) {
+      showToast(`Uploading ${toAdd.length} question${toAdd.length === 1 ? '' : 's'} to Firebase...`);
+      const batch = db.batch();
+      toAdd.forEach(q => {
+        const ref = db.collection('questions').doc();
+        batch.set(ref, { ...q, id: ref.id }); // Use Firebase-generated ID
+      });
+      await batch.commit();
+    } else if (!db) {
+      state.questions = [...state.questions, ...toAdd];
+      saveLocal();
+    }
+    
+    renderAll();
     const msg = toAdd.length
-      ? `Added ${toAdd.length} question${toAdd.length === 1 ? '' : 's'}${skipped ? ` · ${skipped} duplicate${skipped === 1 ? '' : 's'} skipped` : ''}.`
+      ? `Successfully added ${toAdd.length} question${toAdd.length === 1 ? '' : 's'}${skipped ? ` · ${skipped} duplicate${skipped === 1 ? '' : 's'} skipped` : ''}.`
       : `No new questions — all ${skipped} were already in the bank.`;
     showToast(msg);
   }
@@ -1680,16 +1692,15 @@
 
     // ── Edit mode: update existing question ──
     if (state.editingId) {
-      const idx = state.questions.findIndex(q => q.id === state.editingId);
-      if (idx !== -1) {
-        const updated = { ...state.questions[idx], question, answers, correct, tag };
-        if (db) {
-          db.collection('questions').doc(state.editingId).update({ question, answers, correct, tag })
-            .then(() => { cancelEdit(); showToast('✓ Question updated!'); })
-            .catch(() => showToast('Could not update — check Firebase.'));
-        } else {
-          state.questions[idx] = updated;
-          saveLocal(); renderAll(); cancelEdit(); showToast('✓ Question updated.');
+      if (db) {
+        db.collection('questions').doc(state.editingId).update({ question, answers, correct, tag })
+          .then(() => { cancelEdit(); showToast('✓ Question updated in Firebase!'); })
+          .catch(err => { console.error(err); showToast('Could not update — check Firebase.'); });
+      } else {
+        const idx = state.questions.findIndex(q => q.id === state.editingId);
+        if (idx !== -1) {
+          state.questions[idx] = { ...state.questions[idx], question, answers, correct, tag };
+          saveLocal(); renderAll(); cancelEdit(); showToast('✓ Question updated locally.');
         }
       }
       return;
