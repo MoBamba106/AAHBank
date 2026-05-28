@@ -883,7 +883,7 @@
       <!-- ADD VIEW -->
       <div class="panel" id="addViewPanel">
         <div class="panel-head">
-          <h2>Add a question</h2>
+          <h2 id="addPanelTitle">Add a question</h2>
           <div class="toolbar-group">
             <button class="btn btn-secondary btn-sm" id="exportBtn">⬇ Export</button>
             <label class="btn btn-secondary btn-sm" for="importInput" style="cursor:pointer;">⬆ Import</label>
@@ -975,6 +975,7 @@
             <div class="btn-row">
               <button class="btn btn-primary" id="addQuestionBtn">✓ Save question</button>
               <button class="btn btn-ghost" id="clearFormBtn">Clear</button>
+              <button class="btn btn-secondary hidden" id="cancelEditBtn">✕ Cancel edit</button>
             </div>
 
           </div>
@@ -1148,7 +1149,8 @@
     fillFromOCRBtn: document.getElementById('fillFromOCRBtn'),
     pasteOCRBtn: document.getElementById('pasteOCRBtn'),
     ocrStatus: document.getElementById('ocrStatus'),
-    ocrDropZone: document.getElementById('ocrDropZone')
+    ocrDropZone: document.getElementById('ocrDropZone'),
+    cancelEditBtn: document.getElementById('cancelEditBtn')
   };
 
   const state = {
@@ -1158,7 +1160,8 @@
     search: '',
     tagFilter: 'all',
     quiz: { questions: [], index: 0, score: 0, answered: false, attempts: 0 },
-    pendingOCRText: ''
+    pendingOCRText: '',
+    editingId: null
   };
 
   // ── Utilities ──────────────────────────────────────────────
@@ -1334,6 +1337,7 @@
               <div class="q-num">Q${i+1}${q.tag ? ` · ${escapeHtml(q.tag)}` : ''}</div>
               <div class="q-text">${escapeHtml(q.question || '')}</div>
             </div>
+            <button class="btn btn-secondary btn-xs" data-edit="${q.id}" style="margin-right:4px;">✏ Edit</button>
             <button class="btn btn-ghost btn-xs" data-delete="${q.id}">✕</button>
           </div>
           <div class="ans-grid">${ansHtml}</div>
@@ -1344,6 +1348,7 @@
         </div>`;
     }).join('');
     document.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteQuestion(btn.dataset.delete)));
+    document.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => startEditQuestion(btn.dataset.edit)));
   }
 
   async function deleteQuestion(id) {
@@ -1497,10 +1502,16 @@
       createdAt: Number(q.createdAt || Date.now())
     })).filter(q => q.question && q.answers.A && q.answers.B);
     if (db) { showToast('Import is for local preview — Firebase sync handles shared data.'); }
-    state.questions = normalized;
-    state.quiz.attempts = Number(parsed.quizAttempts || state.quiz.attempts || 0);
+    // Merge: only add questions whose normalized text doesn't already exist
+    const existingNorm = new Set(state.questions.map(q => normalizeText(q.question)));
+    const toAdd = normalized.filter(q => !existingNorm.has(normalizeText(q.question)));
+    const skipped = normalized.length - toAdd.length;
+    state.questions = [...state.questions, ...toAdd];
     saveLocal(); renderAll();
-    showToast(`Imported ${normalized.length} question${normalized.length === 1 ? '' : 's'}.`);
+    const msg = toAdd.length
+      ? `Added ${toAdd.length} question${toAdd.length === 1 ? '' : 's'}${skipped ? ` · ${skipped} duplicate${skipped === 1 ? '' : 's'} skipped` : ''}.`
+      : `No new questions — all ${skipped} were already in the bank.`;
+    showToast(msg);
   }
 
   function renderAll() { renderStats(); renderFilterOptions(); renderBrowse(); renderQuiz(); }
@@ -1631,6 +1642,33 @@
 
   // ── Save question ──────────────────────────────────────────
 
+  function startEditQuestion(id) {
+    const q = state.questions.find(q => q.id === id);
+    if (!q) return;
+    state.editingId = id;
+    els.questionInput.value = q.question || '';
+    els.answerA.value = q.answers?.A || '';
+    els.answerB.value = q.answers?.B || '';
+    els.answerC.value = q.answers?.C || '';
+    els.answerD.value = q.answers?.D || '';
+    els.correctSelect.value = q.correct || 'A';
+    els.tagInput.value = q.tag || '';
+    document.getElementById('addPanelTitle').textContent = 'Edit question';
+    els.addQuestionBtn.textContent = '✓ Update question';
+    els.cancelEditBtn.classList.remove('hidden');
+    setTab('add');
+    els.questionInput.focus();
+    showToast('Editing question — make changes and click Update.');
+  }
+
+  function cancelEdit() {
+    state.editingId = null;
+    document.getElementById('addPanelTitle').textContent = 'Add a question';
+    els.addQuestionBtn.textContent = '✓ Save question';
+    els.cancelEditBtn.classList.add('hidden');
+    resetForm();
+  }
+
   function addQuestion() {
     const question = cleanText(els.questionInput.value);
     const answers = currentAnswersFromForm();
@@ -1639,6 +1677,25 @@
     if (!question) return showToast('Add a question first.');
     if (!answers.A || !answers.B) return showToast('Fill in at least A and B.');
     if (!answers[correct]) return showToast('The correct answer box is empty.');
+
+    // ── Edit mode: update existing question ──
+    if (state.editingId) {
+      const idx = state.questions.findIndex(q => q.id === state.editingId);
+      if (idx !== -1) {
+        const updated = { ...state.questions[idx], question, answers, correct, tag };
+        if (db) {
+          db.collection('questions').doc(state.editingId).update({ question, answers, correct, tag })
+            .then(() => { cancelEdit(); showToast('✓ Question updated!'); })
+            .catch(() => showToast('Could not update — check Firebase.'));
+        } else {
+          state.questions[idx] = updated;
+          saveLocal(); renderAll(); cancelEdit(); showToast('✓ Question updated.');
+        }
+      }
+      return;
+    }
+
+    // ── Add mode: check for duplicates then save ──
     const dup = state.questions.find(q => normalizeText(q.question) === normalizeText(question));
     if (dup) return showToast('That question is already saved.');
 
@@ -1666,6 +1723,7 @@
   els.tabBtns.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
   els.addQuestionBtn.addEventListener('click', addQuestion);
   els.clearFormBtn.addEventListener('click', resetForm);
+  els.cancelEditBtn.addEventListener('click', cancelEdit);
   els.searchInput.addEventListener('input', e => { state.search = e.target.value; renderBrowse(); });
   els.topicFilter.addEventListener('change', e => { state.tagFilter = e.target.value; renderBrowse(); });
   els.sortNewestBtn.addEventListener('click', () => { state.sortMode = 'newest'; renderBrowse(); });
