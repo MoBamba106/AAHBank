@@ -30,6 +30,9 @@
       --red-dim: rgba(244,63,94,0.12);
       --amber: #f59e0b;
       --purple: #8b5cf6;
+      --gold: #fbbf24;
+      --silver: #e5e7eb;
+      --bronze: #d97706;
       --r: 16px;
       --r-lg: 20px;
       --shadow: 0 4px 24px rgba(0,0,0,0.4);
@@ -126,9 +129,24 @@
     .nav-right {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
       margin-left: auto;
     }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text2);
+    }
+
+    .user-pill strong { color: var(--blue); }
 
     .status-dot {
       display: flex;
@@ -558,23 +576,34 @@
     }
 
     .quiz-stats-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
       padding: 12px 16px;
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--r);
     }
 
-    .quiz-score-display {
+    .quiz-stat-item {
       display: flex;
-      align-items: baseline;
-      gap: 6px;
+      flex-direction: column;
+      gap: 4px;
     }
 
-    .quiz-score-val { font-size: 1.2rem; font-weight: 900; color: var(--blue); }
-    .quiz-score-total { font-size: 0.85rem; color: var(--text3); }
+    .quiz-stat-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .quiz-stat-value {
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: var(--blue);
+    }
 
     .quiz-card-modern {
       background: var(--surface2);
@@ -583,6 +612,12 @@
       padding: 32px;
       box-shadow: var(--shadow);
       position: relative;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .quiz-q-header {
@@ -665,12 +700,18 @@
     .quiz-opt-btn.correct .opt-indicator { background: var(--green); color: white; }
     .quiz-opt-btn.wrong .opt-indicator { background: var(--red); color: white; }
 
-    .quiz-action-area {
-      margin-top: 24px;
-      display: flex;
-      justify-content: flex-end;
-      min-height: 48px;
+    .quiz-feedback {
+      margin-top: 20px;
+      padding: 14px 16px;
+      border-radius: var(--r);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      min-height: 24px;
     }
+
+    .quiz-feedback.correct { background: var(--green-dim); color: var(--green); }
+    .quiz-feedback.wrong { background: var(--red-dim); color: var(--red); }
 
     .quiz-finished-card {
       text-align: center;
@@ -680,6 +721,99 @@
     .quiz-result-icon { font-size: 4rem; margin-bottom: 16px; }
     .quiz-result-score { font-size: 2.5rem; font-weight: 900; margin-bottom: 8px; }
     .quiz-result-msg { color: var(--text2); font-size: 1.1rem; margin-bottom: 24px; }
+
+    /* ─── LEADERBOARD ─────────────────────────── */
+    .leaderboard-podium {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+      align-items: flex-end;
+    }
+
+    .podium-slot {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .podium-rank {
+      width: 100%;
+      border-radius: var(--r);
+      padding: 12px 8px;
+      text-align: center;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .podium-rank.first {
+      background: linear-gradient(135deg, var(--gold), #f59e0b);
+      color: #000;
+      order: 2;
+      min-height: 100px;
+    }
+
+    .podium-rank.second {
+      background: linear-gradient(135deg, var(--silver), #d1d5db);
+      color: #000;
+      order: 1;
+      min-height: 80px;
+    }
+
+    .podium-rank.third {
+      background: linear-gradient(135deg, var(--bronze), #ea580c);
+      color: white;
+      order: 3;
+      min-height: 60px;
+    }
+
+    .podium-medal { font-size: 2rem; }
+    .podium-name { font-size: 0.75rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+    .podium-count { font-size: 1.3rem; font-weight: 900; }
+
+    .leaderboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      font-size: 0.9rem;
+    }
+
+    .leaderboard-rank {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--surface3);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+
+    .leaderboard-name {
+      flex: 1;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .leaderboard-count {
+      font-weight: 900;
+      color: var(--blue);
+    }
 
     /* ─── SIDEBAR ─────────────────────────────── */
     .sidebar { display: flex; flex-direction: column; gap: 16px; }
@@ -796,6 +930,58 @@
       padding: 1px 7px;
     }
 
+    /* ─── MODAL ───────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: grid;
+      place-items: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .modal-desc {
+      font-size: 0.9rem;
+      color: var(--text2);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-input {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+    }
+
     /* ─── RESPONSIVE ──────────────────────────── */
     @media (max-width: 1024px) {
       .main { grid-template-columns: 1fr; padding: 16px; }
@@ -819,6 +1005,18 @@
 <body>
 <div class="app">
 
+  <!-- NAME MODAL -->
+  <div class="modal-overlay show" id="nameModal">
+    <div class="modal-content">
+      <div class="modal-title">Welcome to StudyBank 📚</div>
+      <div class="modal-desc">What's your name? This will be used for the leaderboard to track your question uploads.</div>
+      <input class="modal-input field" id="nameInput" type="text" placeholder="Enter your name…" />
+      <div class="modal-btns">
+        <button class="btn btn-primary" id="nameSubmitBtn" style="flex:1;">Continue</button>
+      </div>
+    </div>
+  </div>
+
   <!-- NAV -->
   <nav class="topnav">
     <a class="nav-logo" href="#">
@@ -838,6 +1036,7 @@
       </button>
     </div>
     <div class="nav-right">
+      <div class="user-pill">👤 <strong id="userNameDisplay">Guest</strong></div>
       <div class="status-dot local" id="syncPill">Local</div>
     </div>
   </nav>
@@ -991,11 +1190,14 @@
           <div id="quizView">
             <div class="quiz-layout">
               <div class="quiz-stats-bar">
-                <div class="quiz-score-display">
-                  <span class="quiz-score-val" id="quizScoreVal">0</span>
-                  <span class="quiz-score-total" id="quizScoreTotal">/ 0</span>
+                <div class="quiz-stat-item">
+                  <div class="quiz-stat-label">Correct</div>
+                  <div class="quiz-stat-value" id="quizCorrect">0</div>
                 </div>
-                <div class="quiz-prog-label" id="quizProgressText">Ready to start?</div>
+                <div class="quiz-stat-item">
+                  <div class="quiz-stat-label">Progress</div>
+                  <div class="quiz-stat-value" id="quizProgress">0/0</div>
+                </div>
               </div>
               <div class="progress-bar"><div id="progressBar" style="width:0%"></div></div>
               
@@ -1004,10 +1206,6 @@
                   <div class="empty-icon">🎯</div>
                   <p>Start a quiz to mix all your saved questions together.</p>
                 </div>
-              </div>
-
-              <div class="quiz-action-area">
-                <button class="btn btn-primary hidden" id="nextQuestionBtn">Next Question →</button>
               </div>
             </div>
           </div>
@@ -1018,6 +1216,39 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
+
+      <!-- Leaderboard -->
+      <div class="side-panel">
+        <div class="side-head">🏆 Leaderboard</div>
+        <div class="side-body">
+          <div class="leaderboard-podium" id="leaderboardPodium">
+            <div class="podium-slot">
+              <div class="podium-rank second">
+                <div class="podium-medal">🥈</div>
+                <div class="podium-name">—</div>
+                <div class="podium-count">0</div>
+              </div>
+            </div>
+            <div class="podium-slot">
+              <div class="podium-rank first">
+                <div class="podium-medal">🥇</div>
+                <div class="podium-name">—</div>
+                <div class="podium-count">0</div>
+              </div>
+            </div>
+            <div class="podium-slot">
+              <div class="podium-rank third">
+                <div class="podium-medal">🥉</div>
+                <div class="podium-name">—</div>
+                <div class="podium-count">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="leaderboard-list" id="leaderboardList">
+            <div class="leaderboard-item" style="color:var(--text3);">No data yet</div>
+          </div>
+        </div>
+      </div>
 
       <!-- Firebase setup guide -->
       <div class="side-panel">
@@ -1069,6 +1300,8 @@
 
 <script>
   const STORAGE_KEY = "question_bank_builder_v2";
+  const LEADERBOARD_KEY = "studybank_leaderboard";
+  const USER_KEY = "studybank_user";
 
   const firebaseConfig = {
     apiKey: "AIzaSyATUndeZI0qOD-g66UfNAYtU9UPkRrTzKY",
@@ -1080,6 +1313,10 @@
   };
 
   const els = {
+    nameModal: document.getElementById('nameModal'),
+    nameInput: document.getElementById('nameInput'),
+    nameSubmitBtn: document.getElementById('nameSubmitBtn'),
+    userNameDisplay: document.getElementById('userNameDisplay'),
     tabBtns: document.querySelectorAll('.nav-tab'),
     addViewPanel: document.getElementById('addViewPanel'),
     browseViewPanel: document.getElementById('browseViewPanel'),
@@ -1101,12 +1338,10 @@
     sortOldestBtn: document.getElementById('sortOldestBtn'),
     clearAllBtn: document.getElementById('clearAllBtn'),
     startQuizBtn: document.getElementById('startQuizBtn'),
-    nextQuestionBtn: document.getElementById('nextQuestionBtn'),
     restartQuizBtn: document.getElementById('restartQuizBtn'),
     quizArea: document.getElementById('quizArea'),
-    quizScoreVal: document.getElementById('quizScoreVal'),
-    quizScoreTotal: document.getElementById('quizScoreTotal'),
-    quizProgressText: document.getElementById('quizProgressText'),
+    quizCorrect: document.getElementById('quizCorrect'),
+    quizProgress: document.getElementById('quizProgress'),
     progressBar: document.getElementById('progressBar'),
     toast: document.getElementById('toast'),
     bankCountPill: document.getElementById('bankCountPill'),
@@ -1119,16 +1354,20 @@
     fillFromOCRBtn: document.getElementById('fillFromOCRBtn'),
     pasteOCRBtn: document.getElementById('pasteOCRBtn'),
     ocrStatus: document.getElementById('ocrStatus'),
-    ocrDropZone: document.getElementById('ocrDropZone')
+    ocrDropZone: document.getElementById('ocrDropZone'),
+    leaderboardPodium: document.getElementById('leaderboardPodium'),
+    leaderboardList: document.getElementById('leaderboardList')
   };
 
   const state = {
+    userName: '',
     questions: [],
     activeTab: 'add',
     sortMode: 'newest',
     search: '',
     quiz: { questions: [], index: 0, score: 0, answered: false, attempts: 0 },
-    pendingOCRText: ''
+    pendingOCRText: '',
+    leaderboard: {}
   };
 
   // ── Utilities ──────────────────────────────────────────────
@@ -1180,6 +1419,95 @@
   function setOcrStatus(msg, type) {
     els.ocrStatus.textContent = msg;
     els.ocrStatus.className = 'ocr-status' + (type ? ' ' + type : '');
+  }
+
+  // ── User Management ────────────────────────────────────────
+
+  function saveUserName(name) {
+    state.userName = cleanText(name);
+    localStorage.setItem(USER_KEY, state.userName);
+    els.userNameDisplay.textContent = state.userName;
+    els.nameModal.classList.remove('show');
+  }
+
+  function loadUserName() {
+    const saved = localStorage.getItem(USER_KEY);
+    if (saved) {
+      state.userName = saved;
+      els.userNameDisplay.textContent = state.userName;
+      els.nameModal.classList.remove('show');
+    }
+  }
+
+  // ── Leaderboard ────────────────────────────────────────────
+
+  function loadLeaderboard() {
+    try {
+      const raw = localStorage.getItem(LEADERBOARD_KEY);
+      if (raw) state.leaderboard = JSON.parse(raw);
+    } catch(e) { console.warn('loadLeaderboard error', e); }
+  }
+
+  function saveLeaderboard() {
+    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(state.leaderboard));
+    renderLeaderboard();
+  }
+
+  function incrementUserQuestions() {
+    if (!state.userName) return;
+    if (!state.leaderboard[state.userName]) {
+      state.leaderboard[state.userName] = 0;
+    }
+    state.leaderboard[state.userName]++;
+    saveLeaderboard();
+  }
+
+  function renderLeaderboard() {
+    const sorted = Object.entries(state.leaderboard)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    if (sorted.length === 0) {
+      els.leaderboardList.innerHTML = '<div class="leaderboard-item" style="color:var(--text3);">No data yet</div>';
+      return;
+    }
+
+    const top3 = sorted.slice(0, 3);
+    const rest = sorted.slice(3, 5);
+
+    // Render podium
+    const podiumHtml = `
+      <div class="podium-slot">
+        <div class="podium-rank second">
+          <div class="podium-medal">🥈</div>
+          <div class="podium-name">${top3[1] ? escapeHtml(top3[1][0]) : '—'}</div>
+          <div class="podium-count">${top3[1] ? top3[1][1] : 0}</div>
+        </div>
+      </div>
+      <div class="podium-slot">
+        <div class="podium-rank first">
+          <div class="podium-medal">🥇</div>
+          <div class="podium-name">${top3[0] ? escapeHtml(top3[0][0]) : '—'}</div>
+          <div class="podium-count">${top3[0] ? top3[0][1] : 0}</div>
+        </div>
+      </div>
+      <div class="podium-slot">
+        <div class="podium-rank third">
+          <div class="podium-medal">🥉</div>
+          <div class="podium-name">${top3[2] ? escapeHtml(top3[2][0]) : '—'}</div>
+          <div class="podium-count">${top3[2] ? top3[2][1] : 0}</div>
+        </div>
+      </div>`;
+    els.leaderboardPodium.innerHTML = podiumHtml;
+
+    // Render list (4-5)
+    const listHtml = rest.map((entry, idx) => `
+      <div class="leaderboard-item">
+        <div class="leaderboard-rank">${idx + 4}</div>
+        <div class="leaderboard-name">${escapeHtml(entry[0])}</div>
+        <div class="leaderboard-count">${entry[1]}</div>
+      </div>`).join('');
+    els.leaderboardList.innerHTML = listHtml || '<div class="leaderboard-item" style="color:var(--text3);">No more entries</div>';
   }
 
   // ── Tab routing ────────────────────────────────────────────
@@ -1337,11 +1665,9 @@
   function renderQuiz() {
     renderStats();
     if (!state.quiz.questions.length) {
-      els.quizScoreVal.textContent = '0';
-      els.quizScoreTotal.textContent = '/ 0';
-      els.quizProgressText.textContent = state.questions.length ? 'Press Start to begin' : 'Add questions first';
+      els.quizCorrect.textContent = '0';
+      els.quizProgress.textContent = '0/0';
       els.progressBar.style.width = '0%';
-      els.nextQuestionBtn.classList.add('hidden');
       els.quizArea.innerHTML = state.questions.length
         ? '<div class="empty-state"><div class="empty-icon">🎯</div><p>Press Start to mix all questions and begin.</p></div>'
         : '<div class="empty-state"><div class="empty-icon">📭</div><p>Add questions in the Add tab first.</p></div>';
@@ -1351,14 +1677,12 @@
     const total = state.quiz.questions.length;
     const q = state.quiz.questions[state.quiz.index];
 
-    els.quizScoreVal.textContent = state.quiz.score;
-    els.quizScoreTotal.textContent = `/ ${total}`;
+    els.quizCorrect.textContent = state.quiz.score;
+    els.quizProgress.textContent = `${state.quiz.index}/${total}`;
     els.progressBar.style.width = `${Math.round((state.quiz.index / total)*100)}%`;
 
     if (!q) {
-      els.quizProgressText.textContent = 'Finished!';
       els.progressBar.style.width = '100%';
-      els.nextQuestionBtn.classList.add('hidden');
       const pct = Math.round((state.quiz.score/total)*100);
       els.quizArea.innerHTML = `
         <div class="quiz-finished-card">
@@ -1370,9 +1694,6 @@
       return;
     }
 
-    els.quizProgressText.textContent = `Question ${state.quiz.index+1} of ${total}`;
-    els.nextQuestionBtn.classList.add('hidden');
-
     const opts = ['A','B','C','D'].filter(l => q.answers?.[l]).map(l => `
       <button class="quiz-opt-btn" data-choice="${l}">
         <span class="opt-indicator">${l}</span>
@@ -1380,7 +1701,7 @@
       </button>`).join('');
 
     els.quizArea.innerHTML = `
-      <div class="quiz-card-modern fade-in">
+      <div class="quiz-card-modern">
         <div class="quiz-q-header">
           <div class="quiz-q-count">Question ${state.quiz.index+1}</div>
           <div class="quiz-q-text-large">${escapeHtml(q.question || '')}</div>
@@ -1415,15 +1736,21 @@
     }
     feedback.classList.remove('hidden');
 
-    els.quizScoreVal.textContent = state.quiz.score;
-    els.nextQuestionBtn.classList.remove('hidden');
+    els.quizCorrect.textContent = state.quiz.score;
     els.progressBar.style.width = `${Math.round(((state.quiz.index+1)/state.quiz.questions.length)*100)}%`;
-  }
 
-  function nextQuestion() {
-    if (!state.quiz.questions.length) return;
-    if (!state.quiz.answered) return showToast('Pick an answer first.');
-    state.quiz.index++; state.quiz.answered = false; renderQuiz();
+    // Auto-advance after 2 seconds
+    setTimeout(() => {
+      if (state.quiz.index + 1 < state.quiz.questions.length) {
+        state.quiz.index++;
+        state.quiz.answered = false;
+        renderQuiz();
+      } else {
+        // Quiz finished, show results
+        state.quiz.index++;
+        renderQuiz();
+      }
+    }, 2000);
   }
 
   function restartQuiz() {
@@ -1472,9 +1799,11 @@
         batch.set(ref, { ...q, id: ref.id });
       });
       await batch.commit();
+      incrementUserQuestions();
     } else if (!db) {
       state.questions = [...state.questions, ...toAdd];
       saveLocal();
+      incrementUserQuestions();
     }
     
     renderAll();
@@ -1619,9 +1948,9 @@
 
     const item = { id: uid(), question, answers, correct, createdAt: Date.now() };
     if (db) {
-      db.collection('questions').add(item).then(() => { resetForm(); showToast('✓ Saved to shared bank!'); }).catch(() => showToast('Could not save — check Firebase.'));
+      db.collection('questions').add(item).then(() => { resetForm(); incrementUserQuestions(); showToast('✓ Saved to shared bank!'); }).catch(() => showToast('Could not save — check Firebase.'));
     } else {
-      state.questions.unshift(item); saveLocal(); renderAll(); resetForm(); showToast('✓ Saved locally.');
+      state.questions.unshift(item); saveLocal(); renderAll(); resetForm(); incrementUserQuestions(); showToast('✓ Saved locally.');
     }
   }
 
@@ -1638,6 +1967,15 @@
 
   // ── Event listeners ────────────────────────────────────────
 
+  els.nameSubmitBtn.addEventListener('click', () => {
+    const name = els.nameInput.value;
+    if (!name.trim()) return showToast('Please enter your name.');
+    saveUserName(name);
+  });
+  els.nameInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') els.nameSubmitBtn.click();
+  });
+
   els.tabBtns.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
   els.addQuestionBtn.addEventListener('click', addQuestion);
   els.clearFormBtn.addEventListener('click', resetForm);
@@ -1646,7 +1984,6 @@
   els.sortOldestBtn.addEventListener('click', () => { state.sortMode = 'oldest'; renderBrowse(); });
   els.clearAllBtn.addEventListener('click', clearAll);
   els.startQuizBtn.addEventListener('click', startQuiz);
-  els.nextQuestionBtn.addEventListener('click', nextQuestion);
   els.restartQuizBtn.addEventListener('click', restartQuiz);
   els.exportBtn.addEventListener('click', exportJSON);
   els.importInput.addEventListener('change', async e => {
@@ -1671,7 +2008,10 @@
   // ── Boot ───────────────────────────────────────────────────
 
   loadLocal();
+  loadLeaderboard();
+  loadUserName();
   renderAll();
+  renderLeaderboard();
   listenToQuestions();
   setTab('add');
 </script>
