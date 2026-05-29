@@ -6,9 +6,9 @@
   <title>StudyBank</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" integrity="sha384-AQ3POAMqIhwS81FrUH95ekxqBZHeP5tG2JfEL3+7GuTtfRLWnrRh32UxwzM+//A9" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" integrity="sha384-qn4Jh88HhJA8dplNQyGjOh9OGI4izVhrfj/qIFgaKcdgOE06pXqIKGlsCILZcLAC" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" integrity="sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F" crossorigin="anonymous"></script>
   <style>
     :root {
       --bg: #080c14;
@@ -1437,6 +1437,10 @@
   const LEADERBOARD_KEY = "studybank_leaderboard";
   const USER_KEY = "studybank_user";
 
+  // NOTE: Firebase web API keys are designed to be public (they identify your
+  // project to Google's servers).  They are NOT secret server keys.  Security is
+  // enforced server-side via Firestore Security Rules — see firestore.rules in
+  // this repo.  Make sure those rules are deployed before exposing the app.
   const firebaseConfig = {
     apiKey: "AIzaSyATUndeZI0qOD-g66UfNAYtU9UPkRrTzKY",
     authDomain: "aahquestionbank.firebaseapp.com",
@@ -1557,8 +1561,14 @@
 
   // ── User Management ────────────────────────────────────────
 
+  function sanitizeUserName(name) {
+    let n = cleanText(name).replace(/[<>"'&\/]/g, '');
+    if (n.length > 40) n = n.slice(0, 40);
+    return n;
+  }
+
   function saveUserName(name) {
-    state.userName = cleanText(name);
+    state.userName = sanitizeUserName(name);
     localStorage.setItem(USER_KEY, state.userName);
     els.userNameDisplay.textContent = state.userName;
     els.nameModal.classList.remove('show');
@@ -1898,12 +1908,12 @@
       state.quiz.score++;
       picked.classList.add('correct');
       feedback.className = 'quiz-feedback correct';
-      feedback.innerHTML = `✓ Correct!`;
+      feedback.textContent = '✓ Correct!';
     } else {
       picked.classList.add('wrong');
       if (correctBtn) correctBtn.classList.add('correct');
       feedback.className = 'quiz-feedback wrong';
-      feedback.innerHTML = `✗ Incorrect. The correct answer was ${q.correct}.`;
+      feedback.textContent = '✗ Incorrect. The correct answer was ' + q.correct + '.';
     }
     feedback.classList.remove('hidden');
 
@@ -2120,7 +2130,9 @@
     const answers = currentAnswersFromForm();
     const correct = els.correctSelect.value;
     if (!question) return showToast('Add a question first.');
+    if (question.length > 1000) return showToast('Question text is too long (max 1000 chars).');
     if (!answers.A || !answers.B) return showToast('Fill in at least A and B.');
+    if (Object.values(answers).some(a => a.length > 500)) return showToast('Answer text is too long (max 500 chars).');
     if (!answers[correct]) return showToast('The correct answer box is empty.');
 
     const dup = state.questions.find(q => normalizeText(q.question) === normalizeText(question));

@@ -6,9 +6,9 @@
   <title>StudyBank</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" integrity="sha384-AQ3POAMqIhwS81FrUH95ekxqBZHeP5tG2JfEL3+7GuTtfRLWnrRh32UxwzM+//A9" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" integrity="sha384-qn4Jh88HhJA8dplNQyGjOh9OGI4izVhrfj/qIFgaKcdgOE06pXqIKGlsCILZcLAC" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" integrity="sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F" crossorigin="anonymous"></script>
   <style>
     :root {
       --bg: #080c14;
@@ -1098,6 +1098,10 @@
 <script>
   const STORAGE_KEY = "question_bank_builder_v2";
 
+  // NOTE: Firebase web API keys are designed to be public (they identify your
+  // project to Google's servers).  They are NOT secret server keys.  Security is
+  // enforced server-side via Firestore Security Rules — see firestore.rules in
+  // this repo.  Make sure those rules are deployed before exposing the app.
   const firebaseConfig = {
     apiKey: "AIzaSyATUndeZI0qOD-g66UfNAYtU9UPkRrTzKY",
     authDomain: "aahquestionbank.firebaseapp.com",
@@ -1453,7 +1457,7 @@
       picked.classList.add('wrong');
       if (correctBtn) correctBtn.classList.add('correct');
       feedback.className = 'quiz-feedback wrong';
-      feedback.innerHTML = `✗ Not quite. Correct answer: <strong>${q.correct} — ${escapeHtml(q.answers[q.correct])}</strong>`;
+      feedback.innerHTML = `✗ Not quite. Correct answer: <strong>${escapeHtml(q.correct)} — ${escapeHtml(q.answers[q.correct])}</strong>`;
     }
 
     els.quizScore.innerHTML = `${state.quiz.score} <span>/ ${state.quiz.questions.length}</span>`;
@@ -1675,7 +1679,10 @@
     const correct = els.correctSelect.value;
     const tag = cleanText(els.tagInput.value);
     if (!question) return showToast('Add a question first.');
+    if (question.length > 1000) return showToast('Question text is too long (max 1000 chars).');
     if (!answers.A || !answers.B) return showToast('Fill in at least A and B.');
+    if (Object.values(answers).some(a => a.length > 500)) return showToast('Answer text is too long (max 500 chars).');
+    if (tag.length > 100) return showToast('Tag is too long (max 100 chars).');
     if (!answers[correct]) return showToast('The correct answer box is empty.');
 
     // ── Edit mode: update existing question ──
