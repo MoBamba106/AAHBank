@@ -1,0 +1,11 @@
+services:
+  app:
+    image: nginx:alpine
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./studybank_fixed.html:/usr/share/nginx/html/studybank_fixed.html:ro
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+    restart: unless-stopped
