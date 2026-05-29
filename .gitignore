@@ -1,0 +1,20 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+.dev.vars
+.dev.vars.local
+
+# Keep example files
+!.env.example
+!.dev.vars.example
+
+# Wrangler
+.wrangler
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
