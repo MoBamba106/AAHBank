@@ -176,7 +176,6 @@
     .main {
       display: grid;
       grid-template-columns: 1fr 320px;
-      gap: 0;
       align-items: start;
       max-width: 1200px;
       margin: 0 auto;
@@ -1198,9 +1197,9 @@
         <div class="panel-head">
           <h2 id="addPanelTitle">Add a question</h2>
           <div class="toolbar-group">
-            <label class="btn btn-secondary btn-sm" for="importInput" style="cursor:pointer;">⬇ Import</label>
+            <button class="btn btn-secondary btn-sm" id="exportBtn">⬇ Export</button>
+            <label class="btn btn-secondary btn-sm" for="importInput" style="cursor:pointer;">⬆ Import</label>
             <input id="importInput" type="file" accept="application/json" class="hidden" />
-            <button class="btn btn-secondary btn-sm" id="exportBtn">⬆ Export</button>
           </div>
         </div>
         <div class="panel-body">
@@ -1558,7 +1557,7 @@
   // ── User Management ────────────────────────────────────────
 
   function saveUserName(name) {
-    state.userName = cleanText(name);
+    state.userName = cleanText(name).slice(0, 30);
     localStorage.setItem(USER_KEY, state.userName);
     els.userNameDisplay.textContent = state.userName;
     els.nameModal.classList.remove('show');
@@ -1575,7 +1574,10 @@
 
   // ── Leaderboard ────────────────────────────────────────────
 
+  let unsubLeaderboard = null;
+
   function loadLeaderboard() {
+    if (db) return;
     try {
       const raw = localStorage.getItem(LEADERBOARD_KEY);
       if (raw) state.leaderboard = JSON.parse(raw);
@@ -1584,7 +1586,7 @@
 
   function listenToLeaderboard() {
     if (!db) { renderLeaderboard(); return; }
-    db.collection('leaderboard').onSnapshot(snapshot => {
+    unsubLeaderboard = db.collection('leaderboard').onSnapshot(snapshot => {
       state.leaderboard = {};
       snapshot.docs.forEach(doc => {
         state.leaderboard[doc.id] = doc.data().count || 0;
@@ -1601,7 +1603,10 @@
       db.collection('leaderboard').doc(state.userName).set(
         { count: firebase.firestore.FieldValue.increment(1) },
         { merge: true }
-      ).catch(err => console.error('Failed to update leaderboard:', err));
+      ).catch(err => {
+        console.error('Failed to update leaderboard:', err);
+        showToast('Could not update leaderboard — check connection.');
+      });
     } else {
       if (!state.leaderboard[state.userName]) {
         state.leaderboard[state.userName] = 0;
@@ -1675,7 +1680,14 @@
   // ── Persistence ────────────────────────────────────────────
 
   function saveLocal() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ questions: state.questions, quizAttempts: state.quiz.attempts }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      questions: state.questions,
+      quizAttempts: state.quiz.attempts,
+      quizResults: state.quiz.results,
+      quizIndex: state.quiz.index,
+      quizScore: state.quiz.score,
+      quizQuestions: state.quiz.questions
+    }));
     renderStats();
   }
 
@@ -1686,6 +1698,10 @@
       const p = JSON.parse(raw);
       state.questions = Array.isArray(p.questions) ? p.questions : [];
       state.quiz.attempts = Number(p.quizAttempts || 0);
+      state.quiz.results = Array.isArray(p.quizResults) ? p.quizResults : [];
+      state.quiz.index = Number(p.quizIndex || 0);
+      state.quiz.score = Number(p.quizScore || 0);
+      state.quiz.questions = Array.isArray(p.quizQuestions) ? p.quizQuestions : [];
     } catch(e) { console.warn('loadLocal error', e); }
   }
 
@@ -1716,9 +1732,11 @@
 
   const db = ensureFirebase();
 
+  let unsubQuestions = null;
+
   function listenToQuestions() {
     if (!db) { renderAll(); return; }
-    db.collection('questions').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+    unsubQuestions = db.collection('questions').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
       state.questions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setSyncStatus('synced');
       renderAll();
@@ -1808,7 +1826,8 @@
     }
     state.quiz.questions = shuffle(state.questions);
     state.quiz.index = 0; state.quiz.score = 0; state.quiz.answered = false; state.quiz.results = [];
-    state.quiz.attempts++; saveLocal(); renderQuiz();
+    state.quiz.attempts++; saveLocal();
+    renderQuiz();
     showToast('Quiz started — good luck!');
   }
 
@@ -1907,7 +1926,6 @@
     }
     feedback.classList.remove('hidden');
 
-    // Track the result
     state.quiz.results.push({
       question: q.question,
       userAnswer: choice,
@@ -1915,22 +1933,22 @@
       isCorrect: isCorrect,
       answers: q.answers
     });
+    saveLocal();
 
     els.quizCorrect.textContent = state.quiz.score;
     els.progressBar.style.width = `${Math.round(((state.quiz.index+1)/state.quiz.questions.length)*100)}%`;
 
-    // Auto-advance after 2 seconds
+    const delay = isCorrect ? 1500 : 3500;
     setTimeout(() => {
       if (state.quiz.index + 1 < state.quiz.questions.length) {
         state.quiz.index++;
         state.quiz.answered = false;
         renderQuiz();
       } else {
-        // Quiz finished, show results
         state.quiz.index++;
         renderQuiz();
       }
-    }, 2000);
+    }, delay);
   }
 
   function restartQuiz() {
@@ -1942,7 +1960,7 @@
   function clearAll() {
     if (!confirm('Delete every saved question?')) return;
     if (db) { alert('To clear the shared bank, delete documents in Firestore directly.'); return; }
-    state.questions = []; state.quiz.questions = []; state.quiz.index = 0; state.quiz.score = 0; state.quiz.answered = false;
+    state.questions = []; state.quiz.questions = []; state.quiz.index = 0; state.quiz.score = 0; state.quiz.answered = false; state.quiz.results = [];
     saveLocal(); renderAll(); showToast('All questions cleared.');
   }
 
